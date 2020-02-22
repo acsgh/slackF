@@ -1,10 +1,10 @@
 package acsgh.slack.infrastucture
 
 import acsgh.slack.domain.SlackClient
-import acsgh.slack.domain.model.{User, UserPresence}
+import acsgh.slack.domain.model.{User, UserPresence, Users}
 import acsgh.slack.infrastucture.converter.Converter
 import acsgh.slack.infrastucture.format.JsonFormat
-import acsgh.slack.infrastucture.model.{FindUserByEmailResponse, FindUserByIdResponse, FindUserPresenceResponse, SlackResponse}
+import acsgh.slack.infrastucture.model._
 import acsgh.slack.syntax._
 import cats.effect.{ConcurrentEffect, Sync}
 import cats.syntax.all._
@@ -29,9 +29,9 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     for {
       response <- urlFormRequest[FindUserByEmailResponse](
         "users.lookupByEmail",
-        UrlForm(
+        Map(
           "email" -> email
-        )
+        ).toUrlForm
       )
       user <- response.user.mapF[User, F](converter.toDomain)
     } yield user
@@ -41,24 +41,37 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     for {
       response <- urlFormRequest[FindUserByIdResponse](
         "users.info",
-        UrlForm(
+        Map(
           "user" -> id
-        )
+        ).toUrlForm
       )
       user <- response.user.mapF[User, F](converter.toDomain)
     } yield user
   }
 
-  override def getUserPresence(id: String): F[Option[UserPresence]]= {
+  override def getUserPresence(id: String): F[Option[UserPresence]] = {
     for {
       response <- urlFormRequest[FindUserPresenceResponse](
         "users.getPresence",
-        UrlForm(
+        Map(
           "user" -> id
-        )
+        ).toUrlForm
       )
       user <- response.presence.flatMapF[UserPresence, F](converter.toDomain)
     } yield user
+  }
+
+  override def getAllUsers(nextCursor: Option[String] = None, limit: Option[Int] = None): F[Users] = {
+    for {
+      response <- urlFormRequest[ListUsersResponse](
+        "users.list",
+        Map(
+          "cursor" -> nextCursor,
+          "limit" -> limit
+        ).toUrlForm
+      )
+      users <- converter.toDomain(response)
+    } yield users
   }
 
   private def urlFormRequest[A <: SlackResponse](slackMethod: String, form: UrlForm)(implicit decoder: EntityDecoder[F, A]): F[A] = {

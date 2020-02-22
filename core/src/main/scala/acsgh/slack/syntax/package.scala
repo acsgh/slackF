@@ -2,6 +2,7 @@ package acsgh.slack
 
 import cats.effect.Sync
 import cats.syntax.all._
+import org.http4s.UrlForm
 
 package object syntax {
 
@@ -16,4 +17,18 @@ package object syntax {
       case None => Option.empty[B].pure[F]
     }
   }
+
+  implicit class MapOps(private val input: Map[String, Any]) {
+    def toUrlForm: UrlForm = UrlForm(
+      input.filter(_._2 != None)
+        .view
+        .mapValues {
+          case Some(v) => v.toString
+          case v => v.toString
+        }
+        .toList
+        : _*
+    )
+  }
+
 }

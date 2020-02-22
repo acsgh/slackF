@@ -1,5 +1,11 @@
 package acsgh.slack.domain.model
 
+case class Users
+(
+  members: List[User],
+  nextCursor: Option[String]
+)
+
 case class User
 (
   id: String,
@@ -8,17 +14,17 @@ case class User
   deleted: Boolean,
   color: String,
   realName: String,
-  timezone: String,
-  timezoneLabel: String,
-  timezoneOffset: Int,
-  profile:Profile,
+  timezone: Option[String],
+  timezoneLabel: Option[String],
+  timezoneOffset: Long,
+  profile: Profile,
   isAdmin: Boolean,
   isOwner: Boolean,
   isPrimaryOwner: Boolean,
   isRestricted: Boolean,
   isUltraRestricted: Boolean,
   isBot: Boolean,
-  updated: Int,
+  updated: Long,
   isAppUser: Boolean,
 )
 
@@ -31,7 +37,7 @@ case class Profile
   displayName: String,
   realNameNormalized: String,
   displayNameNormalized: String,
-  email: String,
+  email: Option[String],
   image24: String,
   image32: String,
   image48: String,
