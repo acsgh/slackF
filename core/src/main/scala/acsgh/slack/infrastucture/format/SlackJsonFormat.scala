@@ -94,5 +94,7 @@ class SlackJsonFormat[F[_] : Sync] extends SprayInstances {
 
   implicit val openChannelResponseFormat: RootJsonFormat[OpenChannelResponse] = jsonFormat4(OpenChannelResponse)
 
+  implicit val userIdsResponseFormat: RootJsonFormat[UserIdsResponse] = jsonFormat5(UserIdsResponse)
+
   def toList(input: JsArray): List[String] = input.elements.map(_.asInstanceOf[JsString].value).toList
 }

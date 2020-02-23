@@ -1,13 +1,17 @@
 package acsgh.slack.infrastucture.converter
 
 import acsgh.slack.domain.model._
-import acsgh.slack.infrastucture.model.{ConversationsResponse, UsersResponse}
+import acsgh.slack.infrastucture.model.{ConversationsResponse, UserIdsResponse, UsersResponse}
 import acsgh.slack.infrastucture.{model => infrastucture}
 import cats.effect.Sync
 import cats.implicits._
 
 class Converter[F[_] : Sync] {
 
+  def toDomain(input: UserIdsResponse): F[UserIds] = UserIds(
+    ids = input.members.getOrElse(List.empty),
+    nextCursor = input.response_metadata.flatMap(_.next_cursor.filter(_.nonEmpty))
+  ).pure[F]
 
   def toDomain(input: UsersResponse): F[Users] = {
     for {

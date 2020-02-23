@@ -25,6 +25,8 @@ trait SlackClient[F[_]] {
 
   def archiveConversation(id: String): F[Boolean]
 
+  def unarchiveConversation(id: String): F[Boolean]
+
   def inviteConversation(id: String, userIds: List[String]): F[Boolean]
 
   def createConversation(name: String, `private`: Boolean, userIds: List[String] = List.empty): F[Option[Conversation]]
@@ -32,4 +34,12 @@ trait SlackClient[F[_]] {
   def openUserConversation(userIds: List[String]): F[Option[String]]
 
   def openChannelConversation(channelId: String): F[Option[String]]
+
+  def setConversationTopic(id:String, topic: String): F[Boolean]
+
+  def setConversationPurpose(id:String, purpose: String): F[Boolean]
+
+  def renameConversation(id:String, name: String): F[Boolean]
+
+  def getConversationMembers(id:String, nextCursor: Option[String] = None, limit: Option[Int] = None): F[UserIds]
 }

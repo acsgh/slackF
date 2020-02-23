@@ -6,6 +6,12 @@ case class Users
   nextCursor: Option[String]
 )
 
+case class UserIds
+(
+  ids: List[String],
+  nextCursor: Option[String]
+)
+
 case class User
 (
   id: String,

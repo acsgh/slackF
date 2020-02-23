@@ -162,6 +162,17 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     } yield response.ok
   }
 
+  override def unarchiveConversation(id: String): F[Boolean] = {
+    for {
+      response <- urlFormRequest[BasicSlackResponse](
+        "conversations.unarchive",
+        Map(
+          "channel" -> id
+        ).toUrlForm
+      )
+    } yield response.ok
+  }
+
   override def inviteConversation(id: String, userIds: List[String]): F[Boolean] = {
     for {
       response <- urlFormRequest[BasicSlackResponse](
@@ -212,6 +223,57 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
         ).toUrlForm
       )
     } yield response.channel.map(_.id)
+  }
+
+  override def setConversationTopic(id:String, topic: String): F[Boolean] = {
+    for {
+      response <- urlFormRequest[BasicSlackResponse](
+        "conversations.setTopic",
+        Map(
+          "channel" -> id,
+          topic -> topic
+        ).toUrlForm
+      )
+    } yield response.ok
+  }
+
+  override def setConversationPurpose(id:String, purpose: String): F[Boolean] = {
+    for {
+      response <- urlFormRequest[BasicSlackResponse](
+        "conversations.setPurpose",
+        Map(
+          "channel" -> id,
+          purpose -> purpose
+        ).toUrlForm
+      )
+    } yield response.ok
+  }
+
+  override def renameConversation(id:String, name: String): F[Boolean] = {
+    for {
+      response <- urlFormRequest[BasicSlackResponse](
+        "conversations.rename",
+        Map(
+          "channel" -> id,
+          name -> name
+        ).toUrlForm
+      )
+    } yield response.ok
+  }
+
+
+  override def getConversationMembers(id: String, nextCursor: Option[String], limit: Option[Int]): F[UserIds] = {
+    for {
+      response <- urlFormRequest[UserIdsResponse](
+        "conversations.members",
+        Map(
+          "channel" -> id,
+          "cursor" -> nextCursor,
+          "limit" -> limit
+        ).toUrlForm
+      )
+      users <- converter.toDomain(response)
+    } yield users
   }
 
   private def urlFormRequest[A <: SlackResponse](slackMethod: String, form: UrlForm)(implicit format: JsonFormat[A]): F[A] = {
