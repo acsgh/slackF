@@ -2,7 +2,7 @@ package acsgh.slack.domain.model
 
 case class Users
 (
-  members: List[User],
+  items: List[User],
   nextCursor: Option[String]
 )
 

@@ -1,7 +1,7 @@
 package acsgh.slack.infrastucture.converter
 
 import acsgh.slack.domain.model._
-import acsgh.slack.infrastucture.model.ListUsersResponse
+import acsgh.slack.infrastucture.model.{ConversationsResponse, UsersResponse}
 import acsgh.slack.infrastucture.{model => infrastucture}
 import cats.effect.Sync
 import cats.implicits._
@@ -9,12 +9,21 @@ import cats.implicits._
 class Converter[F[_] : Sync] {
 
 
-  def toDomain(input: ListUsersResponse): F[Users] = {
+  def toDomain(input: UsersResponse): F[Users] = {
     for {
       members <- input.members.fold(List.empty[User].pure[F])(_.traverse(toDomain))
     } yield Users(
-      members = members,
-      nextCursor = input.response_metadata.next_cursor.filter(_.nonEmpty)
+      items = members,
+      nextCursor = input.response_metadata.flatMap(_.next_cursor.filter(_.nonEmpty))
+    )
+  }
+
+  def toDomain(input: ConversationsResponse): F[Conversations] = {
+    for {
+      channels <- input.channels.fold(List.empty[Conversation].pure[F])(_.traverse(toDomain))
+    } yield Conversations(
+      items = channels,
+      nextCursor = input.response_metadata.flatMap(_.next_cursor.filter(_.nonEmpty))
     )
   }
 
@@ -40,6 +49,44 @@ class Converter[F[_] : Sync] {
     updated = input.updated,
     isAppUser = input.is_app_user,
   ).pure[F]
+
+  def toDomain(input: infrastucture.Conversation): F[Conversation] = Conversation(
+    id = input.id,
+    name = input.name,
+    isChannel = input.is_channel,
+    isGroup = input.is_group,
+    isIm = input.is_im,
+    created = input.created,
+    creator = input.creator,
+    isArchived = input.is_archived,
+    isGeneral = input.is_general,
+    unlinked = input.unlinked,
+    nameNormalized = input.name_normalized,
+    isShared = input.is_shared,
+    isExtShared = input.is_ext_shared,
+    isOrgShared = input.is_org_shared,
+    pendingShared = input.pending_shared,
+    isPendingExtShared = input.is_pending_ext_shared,
+    isMember = input.is_member,
+    isPrivate = input.is_private,
+    isMpim = input.is_mpim,
+    topic = toDomain(input.topic),
+    purpose = toDomain(input.purpose),
+    previousNames = input.previous_names,
+    numMembers = input.num_members
+  ).pure[F]
+
+  private def toDomain(input: infrastucture.ConversationTopic): ConversationTopic = ConversationTopic(
+    value = input.value,
+    creator = input.creator,
+    lastSet = input.last_set
+  )
+
+  private def toDomain(input: infrastucture.ConversationPurpose): ConversationPurpose = ConversationPurpose(
+    value = input.value,
+    creator = input.creator,
+    lastSet = input.last_set
+  )
 
   private def toDomain(input: infrastucture.Profile): Profile = Profile(
     avatarHash = input.avatar_hash,

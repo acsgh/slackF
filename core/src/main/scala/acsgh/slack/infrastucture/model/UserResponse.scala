@@ -1,6 +1,6 @@
 package acsgh.slack.infrastucture.model
 
-case class FindUserByIdResponse
+private[infrastucture]  case class UserResponse
 (
   ok: Boolean,
   error: Option[String],

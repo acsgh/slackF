@@ -1,6 +1,6 @@
 package acsgh.slack.infrastucture.model
 
-case class User
+private[infrastucture] case class User
 (
   id: String,
   team_id: String,
@@ -11,7 +11,7 @@ case class User
   tz: Option[String],
   tz_label: Option[String],
   tz_offset: Long,
-  profile:Profile,
+  profile: Profile,
   is_admin: Boolean,
   is_owner: Boolean,
   is_primary_owner: Boolean,
@@ -22,7 +22,7 @@ case class User
   is_app_user: Boolean,
 )
 
-case class Profile
+private[infrastucture] case class Profile
 (
   avatar_hash: String,
   status_text: String,

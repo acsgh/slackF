@@ -1,7 +1,7 @@
 package acsgh.slack.infrastucture
 
 import acsgh.slack.domain.SlackClient
-import acsgh.slack.domain.model.{User, UserPresence, Users}
+import acsgh.slack.domain.model.{ConversationType, Conversations, User, UserPresence, Users}
 import acsgh.slack.infrastucture.converter.Converter
 import acsgh.slack.infrastucture.format.JsonFormat
 import acsgh.slack.infrastucture.model._
@@ -27,7 +27,7 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
 
   override def findUserByEmail(email: String): F[Option[User]] = {
     for {
-      response <- urlFormRequest[FindUserByEmailResponse](
+      response <- urlFormRequest[UserResponse](
         "users.lookupByEmail",
         Map(
           "email" -> email
@@ -39,7 +39,7 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
 
   override def findUserById(id: String): F[Option[User]] = {
     for {
-      response <- urlFormRequest[FindUserByIdResponse](
+      response <- urlFormRequest[UserResponse](
         "users.info",
         Map(
           "user" -> id
@@ -61,13 +61,43 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     } yield user
   }
 
-  override def getAllUsers(nextCursor: Option[String] = None, limit: Option[Int] = None): F[Users] = {
+  override def getAllUsers(nextCursor: Option[String], limit: Option[Int] ): F[Users] = {
     for {
-      response <- urlFormRequest[ListUsersResponse](
+      response <- urlFormRequest[UsersResponse](
         "users.list",
         Map(
           "cursor" -> nextCursor,
           "limit" -> limit
+        ).toUrlForm
+      )
+      users <- converter.toDomain(response)
+    } yield users
+  }
+
+  override def getAllConversations(nextCursor: Option[String], limit: Option[Int], excludeArchived: Boolean, types: Set[ConversationType]): F[Conversations] = {
+    for {
+      response <- urlFormRequest[ConversationsResponse](
+        "conversations.list",
+        Map(
+          "cursor" -> nextCursor,
+          "limit" -> limit,
+          "exclude_archived" -> excludeArchived,
+          "types" -> Option(types.map(_.entryName).mkString(",")).filter(_.nonEmpty)
+        ).toUrlForm
+      )
+      users <- converter.toDomain(response)
+    } yield users
+  }
+
+  override def getUserConversations(nextCursor: Option[String], limit: Option[Int], excludeArchived: Boolean, types: Set[ConversationType]): F[Conversations] = {
+    for {
+      response <- urlFormRequest[ConversationsResponse](
+        "users.conversations",
+        Map(
+          "cursor" -> nextCursor,
+          "limit" -> limit,
+          "exclude_archived" -> excludeArchived,
+          "types" -> Option(types.map(_.entryName).mkString(",")).filter(_.nonEmpty)
         ).toUrlForm
       )
       users <- converter.toDomain(response)
