@@ -1,9 +1,10 @@
 package acsgh.slack.infrastucture.model
 
-private[infrastucture]  case class UserResponse
+private[infrastucture] case class CloseChannelResponse
 (
   ok: Boolean,
   error: Option[String],
   warning: Option[String],
-  user:Option[User]
+  no_op: Option[Boolean],
+  already_closed: Option[Boolean]
 ) extends SlackResponse

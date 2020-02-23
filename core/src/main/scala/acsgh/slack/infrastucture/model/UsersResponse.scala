@@ -4,7 +4,7 @@ private[infrastucture] case class UsersResponse
 (
   ok: Boolean,
   error: Option[String],
-  warning: Option[List[String]],
+  warning: Option[String],
   members: Option[List[User]],
   cache_ts: Long,
   response_metadata: Option[ResponseMetadata]

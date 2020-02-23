@@ -24,7 +24,7 @@ private[infrastucture] case class Conversation
   topic: ConversationTopic,
   purpose: ConversationPurpose,
   previous_names: List[String],
-  num_members: Long,
+  num_members: Option[Long]
 )
 
 private[infrastucture] case class ConversationTopic
@@ -39,4 +39,9 @@ private[infrastucture] case class ConversationPurpose
   value: String,
   creator: String,
   last_set: Long
+)
+
+private[infrastucture] case class ConversationId
+(
+  id: String
 )

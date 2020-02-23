@@ -2,17 +2,18 @@ package acsgh.slack.infrastucture.format
 
 import acsgh.slack.infrastucture.model._
 import cats.effect.Sync
-import org.http4s.EntityDecoder
 import spray.json._
 
-class JsonFormat[F[_] : Sync] extends SprayInstances {
+class SlackJsonFormat[F[_] : Sync] extends SprayInstances {
 
-  private implicit val conversationPurposeFormat: RootJsonFormat[ConversationPurpose] = jsonFormat3(ConversationPurpose)
+  implicit val conversationIdFormat: RootJsonFormat[ConversationId] = jsonFormat1(ConversationId)
 
-  private implicit val conversationTopicFormat: RootJsonFormat[ConversationTopic] = jsonFormat3(ConversationTopic)
+  implicit val conversationPurposeFormat: RootJsonFormat[ConversationPurpose] = jsonFormat3(ConversationPurpose)
+
+  implicit val conversationTopicFormat: RootJsonFormat[ConversationTopic] = jsonFormat3(ConversationTopic)
 
   implicit object ConversationFormat extends RootJsonFormat[Conversation] {
-    def write(c: Conversation) = JsObject(
+    def write(c: Conversation): JsObject = JsObject(
       "id" -> JsString(c.id),
       "name" -> JsString(c.name),
       "is_channel" -> JsBoolean(c.is_channel),
@@ -35,10 +36,10 @@ class JsonFormat[F[_] : Sync] extends SprayInstances {
       "topic" -> conversationTopicFormat.write(c.topic),
       "purpose" -> conversationPurposeFormat.write(c.purpose),
       "previous_names" -> JsArray(c.previous_names.map(JsString(_)).toVector),
-      "num_members" -> JsNumber(c.num_members),
+      "num_members" -> c.num_members.fold[JsValue](JsNull)(JsNumber(_))
     )
 
-    def read(value: JsValue):Conversation = value match {
+    def read(value: JsValue): Conversation = value match {
       case JsObject(fields) =>
         Conversation(
           id = fields("id").asInstanceOf[JsString].value,
@@ -57,39 +58,41 @@ class JsonFormat[F[_] : Sync] extends SprayInstances {
           is_org_shared = fields("is_org_shared").asInstanceOf[JsBoolean].value,
           pending_shared = toList(fields("pending_shared").asInstanceOf[JsArray]),
           is_pending_ext_shared = fields("is_pending_ext_shared").asInstanceOf[JsBoolean].value,
-          is_member = fields("is_member").asInstanceOf[JsBoolean].value,
+          is_member = fields.get("is_member").forall(_.asInstanceOf[JsBoolean].value),
           is_private = fields("is_private").asInstanceOf[JsBoolean].value,
           is_mpim = fields("is_mpim").asInstanceOf[JsBoolean].value,
           topic = conversationTopicFormat.read(fields("topic").asInstanceOf[JsObject]),
           purpose = conversationPurposeFormat.read(fields("purpose").asInstanceOf[JsObject]),
           previous_names = toList(fields("previous_names").asInstanceOf[JsArray]),
-          num_members = fields("num_members").asInstanceOf[JsNumber].value.toLong,
+          num_members = fields.get("num_members").map(_.asInstanceOf[JsNumber].value.toLong)
         )
       case _ => deserializationError("Conversation expected")
     }
   }
 
-  private implicit val profileFormat: RootJsonFormat[Profile] = jsonFormat15(Profile)
+  implicit val profileFormat: RootJsonFormat[Profile] = jsonFormat15(Profile)
 
-  private implicit val userFormat: RootJsonFormat[User] = jsonFormat18(User)
+  implicit val userFormat: RootJsonFormat[User] = jsonFormat18(User)
 
-  private implicit val userResponseFormat: RootJsonFormat[UserResponse] = jsonFormat4(UserResponse)
+  implicit val userResponseFormat: RootJsonFormat[UserResponse] = jsonFormat4(UserResponse)
 
-  private implicit val responseMetadataFormat: RootJsonFormat[ResponseMetadata] = jsonFormat1(ResponseMetadata)
+  implicit val responseMetadataFormat: RootJsonFormat[ResponseMetadata] = jsonFormat1(ResponseMetadata)
 
-  private implicit val userPresenceFormat: RootJsonFormat[FindUserPresenceResponse] = jsonFormat4(FindUserPresenceResponse)
+  implicit val userPresenceFormat: RootJsonFormat[FindUserPresenceResponse] = jsonFormat4(FindUserPresenceResponse)
 
-  private implicit val usersFormat: RootJsonFormat[UsersResponse] = jsonFormat6(UsersResponse)
+  implicit val usersFormat: RootJsonFormat[UsersResponse] = jsonFormat6(UsersResponse)
 
-  private implicit val conversationsFormat: RootJsonFormat[ConversationsResponse] = jsonFormat5(ConversationsResponse)
+  implicit val conversationsFormat: RootJsonFormat[ConversationsResponse] = jsonFormat5(ConversationsResponse)
 
-  implicit val userEncoder: EntityDecoder[F, UserResponse] = decoderOf[F, UserResponse]
+  implicit val conversationFormat: RootJsonFormat[ConversationResponse] = jsonFormat4(ConversationResponse)
 
-  implicit val usersEncoder: EntityDecoder[F, UsersResponse] = decoderOf[F, UsersResponse]
+  implicit val leaveChannelResponseFormat: RootJsonFormat[LeaveChannelResponse] = jsonFormat4(LeaveChannelResponse)
 
-  implicit val conversationsEncoder: EntityDecoder[F, ConversationsResponse] = decoderOf[F, ConversationsResponse]
+  implicit val closeChannelResponseFormat: RootJsonFormat[CloseChannelResponse] = jsonFormat5(CloseChannelResponse)
 
-  implicit val userPresenceEncoder: EntityDecoder[F, FindUserPresenceResponse] = decoderOf[F, FindUserPresenceResponse]
+  implicit val basicSlackResponseFormat: RootJsonFormat[BasicSlackResponse] = jsonFormat3(BasicSlackResponse)
 
-  private def toList(input: JsArray): List[String] = input.elements.map(_.asInstanceOf[JsString].value).toList
+  implicit val openChannelResponseFormat: RootJsonFormat[OpenChannelResponse] = jsonFormat4(OpenChannelResponse)
+
+  def toList(input: JsArray): List[String] = input.elements.map(_.asInstanceOf[JsString].value).toList
 }

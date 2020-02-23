@@ -51,7 +51,7 @@ case class Conversation
   topic: ConversationTopic,
   purpose: ConversationPurpose,
   previousNames: List[String],
-  numMembers: Long,
+  numMembers: Option[Long]
 )
 
 case class ConversationTopic

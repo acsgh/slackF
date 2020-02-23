@@ -2,7 +2,7 @@ package acsgh.slack
 
 import acsgh.slack.domain.SlackClient
 import acsgh.slack.infrastucture.converter.Converter
-import acsgh.slack.infrastucture.format.JsonFormat
+import acsgh.slack.infrastucture.format.SlackJsonFormat
 import acsgh.slack.infrastucture.{Logger, LoggerFactory, SlackClientHttp4s}
 import cats.effect.ConcurrentEffect
 import cats.implicits._
@@ -22,7 +22,7 @@ object SlackClientBuilder {
       "slackF",
       token,
       uri,
-      new JsonFormat[F],
+      new SlackJsonFormat[F],
       new Converter[F]
     ).pure[F].map(_.asInstanceOf[SlackClient[F]])
   }

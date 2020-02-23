@@ -16,7 +16,7 @@ object Main extends IOApp {
       client <- SlackClientBuilder.build[F](token)
       //      user <- client.getAllUsers()
       //      user <- client.findUserByEmail("asd@gmail.com")
-      user <- client.getUserConversations()
+      user <- client.archiveConversation("CU06YBCPL")
       _ <- printValue(user)
     } yield ExitCode.Success
   }
