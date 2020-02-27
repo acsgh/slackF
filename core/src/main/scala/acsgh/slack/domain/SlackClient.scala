@@ -3,9 +3,9 @@ package acsgh.slack.domain
 import acsgh.slack.domain.model._
 
 trait SlackClient[F[_]] {
-  def findUserByEmail(email: String): F[Option[User]]
+  def getUserByEmail(email: String): F[Option[User]]
 
-  def findUserById(id: String): F[Option[User]]
+  def getUser(id: String): F[Option[User]]
 
   def getUserPresence(id: String): F[Option[UserPresence]]
 
@@ -15,7 +15,7 @@ trait SlackClient[F[_]] {
 
   def getUserConversations(nextCursor: Option[String] = None, limit: Option[Int] = None, excludeArchived: Boolean = true, types: Set[ConversationType] = Set(ConversationType.PublicChannel)): F[Conversations]
 
-  def findConversation(id: String): F[Option[Conversation]]
+  def getConversation(id: String): F[Option[Conversation]]
 
   def joinConversation(id: String): F[Option[Conversation]]
 
@@ -35,11 +35,15 @@ trait SlackClient[F[_]] {
 
   def openChannelConversation(channelId: String): F[Option[String]]
 
-  def setConversationTopic(id:String, topic: String): F[Boolean]
+  def setConversationTopic(id: String, topic: String): F[Boolean]
 
-  def setConversationPurpose(id:String, purpose: String): F[Boolean]
+  def setConversationPurpose(id: String, purpose: String): F[Boolean]
 
-  def renameConversation(id:String, name: String): F[Boolean]
+  def renameConversation(id: String, name: String): F[Boolean]
 
-  def getConversationMembers(id:String, nextCursor: Option[String] = None, limit: Option[Int] = None): F[UserIds]
+  def getConversationMembers(id: String, nextCursor: Option[String] = None, limit: Option[Int] = None): F[UserIds]
+
+  def getConversationHistory(id: String, inclusive: Boolean = false, latestTimestamp: Option[String] = None, oldestTimestamp: Option[String] = None, nextCursor: Option[String] = None, limit: Option[Int] = None): F[Messages]
+
+  def getConversationMessageReplies(id: String, messageId: String, inclusive: Boolean = false, latestTimestamp: Option[String] = None, oldestTimestamp: Option[String] = None, nextCursor: Option[String] = None, limit: Option[Int] = None): F[Messages]
 }

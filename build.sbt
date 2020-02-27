@@ -1,4 +1,4 @@
-ThisBuild / organization := "com.github.acsgh.slack"
+ThisBuild / organization := "com.github.acsgh.slackF"
 ThisBuild / scalaVersion := "2.13.1"
 
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
@@ -60,7 +60,7 @@ val sprayVersion = "1.3.5"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "scalaF",
+    name := "slackF",
     commonSettings,
     crossScalaVersions := Nil,
     publish / skip := true

@@ -74,6 +74,18 @@ class SlackJsonFormat[F[_] : Sync] extends SprayInstances {
 
   implicit val userFormat: RootJsonFormat[User] = jsonFormat18(User)
 
+  implicit val messageAttachmentFormat: RootJsonFormat[MessageAttachment] = jsonFormat7(MessageAttachment)
+
+  implicit val messageBlockElementChildFormat: RootJsonFormat[MessageBlockElementChild] = jsonFormat2(MessageBlockElementChild)
+
+  implicit val messageBlockElementFormat: RootJsonFormat[MessageBlockElement] = jsonFormat2(MessageBlockElement)
+
+  implicit val messageBlockFormat: RootJsonFormat[MessageBlock] = jsonFormat3(MessageBlock)
+
+  implicit val messageReplyFormat: RootJsonFormat[MessageReply] = jsonFormat2(MessageReply)
+
+  implicit val messageFormat: RootJsonFormat[Message] = jsonFormat14(Message)
+
   implicit val userResponseFormat: RootJsonFormat[UserResponse] = jsonFormat4(UserResponse)
 
   implicit val responseMetadataFormat: RootJsonFormat[ResponseMetadata] = jsonFormat1(ResponseMetadata)
@@ -95,6 +107,8 @@ class SlackJsonFormat[F[_] : Sync] extends SprayInstances {
   implicit val openChannelResponseFormat: RootJsonFormat[OpenChannelResponse] = jsonFormat4(OpenChannelResponse)
 
   implicit val userIdsResponseFormat: RootJsonFormat[UserIdsResponse] = jsonFormat5(UserIdsResponse)
+
+  implicit val messagesResponseFormat: RootJsonFormat[MessagesResponse] = jsonFormat5(MessagesResponse)
 
   def toList(input: JsArray): List[String] = input.elements.map(_.asInstanceOf[JsString].value).toList
 }

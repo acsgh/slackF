@@ -1,7 +1,7 @@
 package acsgh.slack.infrastucture.converter
 
 import acsgh.slack.domain.model._
-import acsgh.slack.infrastucture.model.{ConversationsResponse, UserIdsResponse, UsersResponse}
+import acsgh.slack.infrastucture.model.{ConversationsResponse, MessagesResponse, UserIdsResponse, UsersResponse}
 import acsgh.slack.infrastucture.{model => infrastucture}
 import cats.effect.Sync
 import cats.implicits._
@@ -22,6 +22,15 @@ class Converter[F[_] : Sync] {
     )
   }
 
+  def toDomain(input: MessagesResponse): F[Messages] = {
+    for {
+      members <- input.messages.fold(List.empty[Message].pure[F])(_.traverse(toDomain))
+    } yield Messages(
+      items = members,
+      nextCursor = input.response_metadata.flatMap(_.next_cursor.filter(_.nonEmpty))
+    )
+  }
+
   def toDomain(input: ConversationsResponse): F[Conversations] = {
     for {
       channels <- input.channels.fold(List.empty[Conversation].pure[F])(_.traverse(toDomain))
@@ -32,6 +41,58 @@ class Converter[F[_] : Sync] {
   }
 
   def toDomain(input: String): F[Option[UserPresence]] = UserPresence.withNameInsensitiveOption(input).pure[F]
+
+  def toDomain(input: infrastucture.Message): F[Message] = {
+    for {
+      attachments <- input.attachments.fold(List.empty[MessageAttachment].pure[F])(_.traverse(toDomain))
+      blocks <- input.blocks.fold(List.empty[MessageBlock].pure[F])(_.traverse(toDomain))
+    } yield Message(
+      id = input.ts,
+      `type` = MessageType.withName(input.`type`),
+      subtype = input.subtype.flatMap(MessageSubtype.withNameOption),
+      user = input.user,
+      text = input.text,
+      threadId = input.thread_ts,
+      replyCount = input.reply_count.getOrElse(0),
+      subscribed = input.subscribed.getOrElse(false),
+      blocks = blocks,
+      attachments = attachments
+    )
+  }
+
+  def toDomain(input: infrastucture.MessageBlock): F[MessageBlock] = {
+    for {
+      elements <- input.elements.fold(List.empty[MessageBlockElement].pure[F])(_.traverse(toDomain))
+    } yield MessageBlock(
+      id = input.block_id,
+      `type` = MessageBlockType.withName(input.`type`),
+      elements = elements
+    )
+  }
+
+  def toDomain(input: infrastucture.MessageBlockElement): F[MessageBlockElement] = {
+    for {
+      elements <- input.elements.traverse(toDomain)
+    } yield MessageBlockElement(
+      `type` = MessageBlockElementType.withName(input.`type`),
+      elements = elements
+    )
+  }
+
+  def toDomain(input: infrastucture.MessageBlockElementChild): F[MessageBlockElementChild] = MessageBlockElementChild(
+    `type` = MessageBlockElementChildType.withName(input.`type`),
+    text = input.text
+  ).pure[F]
+
+  def toDomain(input: infrastucture.MessageAttachment): F[MessageAttachment] = MessageAttachment(
+    id = input.id,
+    serviceName = input.service_name,
+    text = input.text,
+    fallback = input.fallback,
+    thumbUrl = input.thumb_url,
+    thumbWidth = input.thumb_width,
+    thumbHeight = input.thumb_height
+  ).pure[F]
 
   def toDomain(input: infrastucture.User): F[User] = User(
     id = input.id,

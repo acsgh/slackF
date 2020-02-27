@@ -4,7 +4,7 @@ import acsgh.slack.domain.SlackClient
 import acsgh.slack.domain.model._
 import acsgh.slack.infrastucture.converter.Converter
 import acsgh.slack.infrastucture.format.SlackJsonFormat
-import acsgh.slack.infrastucture.model.{Conversation => _, User => _, _}
+import acsgh.slack.infrastucture.model.{Conversation => _, Message => _, User => _, _}
 import acsgh.slack.syntax._
 import cats.effect.{ConcurrentEffect, Sync}
 import cats.syntax.all._
@@ -26,7 +26,7 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
 
   import jsonFormat._
 
-  override def findUserByEmail(email: String): F[Option[User]] = {
+  override def getUserByEmail(email: String): F[Option[User]] = {
     for {
       response <- urlFormRequest[UserResponse](
         "users.lookupByEmail",
@@ -38,7 +38,7 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     } yield user
   }
 
-  override def findUserById(id: String): F[Option[User]] = {
+  override def getUser(id: String): F[Option[User]] = {
     for {
       response <- urlFormRequest[UserResponse](
         "users.info",
@@ -105,7 +105,7 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     } yield users
   }
 
-  override def findConversation(id: String): F[Option[Conversation]] = {
+  override def getConversation(id: String): F[Option[Conversation]] = {
     for {
       response <- urlFormRequest[ConversationResponse](
         "conversations.info",
@@ -225,7 +225,7 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     } yield response.channel.map(_.id)
   }
 
-  override def setConversationTopic(id:String, topic: String): F[Boolean] = {
+  override def setConversationTopic(id: String, topic: String): F[Boolean] = {
     for {
       response <- urlFormRequest[BasicSlackResponse](
         "conversations.setTopic",
@@ -237,7 +237,7 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     } yield response.ok
   }
 
-  override def setConversationPurpose(id:String, purpose: String): F[Boolean] = {
+  override def setConversationPurpose(id: String, purpose: String): F[Boolean] = {
     for {
       response <- urlFormRequest[BasicSlackResponse](
         "conversations.setPurpose",
@@ -249,7 +249,7 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
     } yield response.ok
   }
 
-  override def renameConversation(id:String, name: String): F[Boolean] = {
+  override def renameConversation(id: String, name: String): F[Boolean] = {
     for {
       response <- urlFormRequest[BasicSlackResponse](
         "conversations.rename",
@@ -270,6 +270,41 @@ case class SlackClientHttp4s[F[_] : Sync : ConcurrentEffect : Logger]
           "channel" -> id,
           "cursor" -> nextCursor,
           "limit" -> limit
+        ).toUrlForm
+      )
+      users <- converter.toDomain(response)
+    } yield users
+  }
+
+  override def getConversationHistory(id: String, inclusive: Boolean, latestTimestamp: Option[String], oldestTimestamp: Option[String], nextCursor: Option[String], limit: Option[Int]): F[Messages] = {
+    for {
+      response <- urlFormRequest[MessagesResponse](
+        "conversations.history",
+        Map(
+          "channel" -> id,
+          "cursor" -> nextCursor,
+          "limit" -> limit,
+          "latest" -> latestTimestamp,
+          "oldest" -> oldestTimestamp,
+          "inclusive" -> inclusive
+        ).toUrlForm
+      )
+      users <- converter.toDomain(response)
+    } yield users
+  }
+
+  override def getConversationMessageReplies(id: String, messageId: String, inclusive: Boolean, latestTimestamp: Option[String], oldestTimestamp: Option[String], nextCursor: Option[String], limit: Option[Int]): F[Messages] = {
+    for {
+      response <- urlFormRequest[MessagesResponse](
+        "conversations.replies",
+        Map(
+          "channel" -> id,
+          "ts" -> messageId,
+          "cursor" -> nextCursor,
+          "limit" -> limit,
+          "latest" -> latestTimestamp,
+          "oldest" -> oldestTimestamp,
+          "inclusive" -> inclusive
         ).toUrlForm
       )
       users <- converter.toDomain(response)
